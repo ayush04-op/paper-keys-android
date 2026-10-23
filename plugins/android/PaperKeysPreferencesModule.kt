@@ -13,15 +13,25 @@ import com.facebook.react.bridge.ReactMethod
 class PaperKeysPreferencesModule(context: ReactApplicationContext) : ReactContextBaseJavaModule(context) {
   override fun getName(): String = "PaperKeysPreferences"
 
+  private fun keyboardPreferences() =
+    reactApplicationContext.getSharedPreferences("paper_keys_settings", Context.MODE_PRIVATE).apply {
+      if (!contains("showNumberRow")) {
+        edit()
+          .putBoolean("showNumberRow", getBoolean("numberRow", true))
+          .remove("numberRow")
+          .apply()
+      }
+    }
+
   @ReactMethod
   fun getPreferences(promise: Promise) {
     try {
-      val prefs = reactApplicationContext.getSharedPreferences("paper_keys_settings", Context.MODE_PRIVATE)
+      val prefs = keyboardPreferences()
       val result = Arguments.createMap().apply {
         putBoolean("sound", prefs.getBoolean("sound", false))
         putBoolean("vibration", prefs.getBoolean("vibration", false))
         putBoolean("keyPreview", prefs.getBoolean("keyPreview", false))
-        putBoolean("numberRow", prefs.getBoolean("numberRow", false))
+        putBoolean("numberRow", prefs.getBoolean("showNumberRow", true))
       }
       promise.resolve(result)
     } catch (error: Exception) {
@@ -32,12 +42,12 @@ class PaperKeysPreferencesModule(context: ReactApplicationContext) : ReactContex
   @ReactMethod
   fun setPreferences(sound: Boolean, vibration: Boolean, keyPreview: Boolean, numberRow: Boolean, promise: Promise) {
     try {
-      reactApplicationContext.getSharedPreferences("paper_keys_settings", Context.MODE_PRIVATE)
+      keyboardPreferences()
         .edit()
         .putBoolean("sound", sound)
         .putBoolean("vibration", vibration)
         .putBoolean("keyPreview", keyPreview)
-        .putBoolean("numberRow", numberRow)
+        .putBoolean("showNumberRow", numberRow)
         .apply()
       promise.resolve(null)
     } catch (error: Exception) {

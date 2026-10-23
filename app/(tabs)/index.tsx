@@ -16,6 +16,7 @@ import {
   defaultKeyboardPreferences,
   paperKeysNative,
   readKeyboardPreferences,
+  writeKeyboardPreferences,
   type KeyboardPreferences,
 } from "@/lib/paper-preferences";
 
@@ -256,6 +257,16 @@ export default function HomeScreen() {
     }
   };
 
+  const toggleNumberRow = () => {
+    const next = { ...preferences, numberRow: !preferences.numberRow };
+    setPreferences(next);
+    void writeKeyboardPreferences(next).catch(() => {
+      setSetupMessage(
+        "Could not save the number-row preference. Please try again.",
+      );
+    });
+  };
+
   return (
     <ScreenContainer style={styles.screen}>
       <View style={styles.grain} pointerEvents="none">
@@ -350,6 +361,8 @@ export default function HomeScreen() {
             onChange={setPreviewText}
             showKeyPreview={preferences.keyPreview}
             numberRow={preferences.numberRow}
+            onOpenSettings={() => router.push("/settings")}
+            onToggleNumberRow={toggleNumberRow}
           />
           <Text style={styles.localNote}>
             Key taps in this preview stay on this screen. The system keyboard

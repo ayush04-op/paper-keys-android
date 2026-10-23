@@ -2,6 +2,7 @@ package __APP_PACKAGE__
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color
@@ -28,22 +29,25 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.LinearLayout
 import android.widget.PopupWindow
 import android.widget.TextView
+import android.widget.Toast
 import java.util.Locale
 
 class PaperKeysInputMethodService : InputMethodService() {
   private data class KeySpec(val label: String, val action: String = "char", val weight: Float = 1f)
+  private data class ToolbarAction(val label: String, val description: String, val onPress: () -> Unit)
 
   private var keyboardRoot: LinearLayout? = null
   private var symbols = false
   private var symbolPage = 0
   private var emojiMode = false
+  private var toolsOpen = false
   private var shifted = false
   private var capsLock = false
   private var sentenceStart = false
   private var soundEnabled = false
   private var vibrationEnabled = false
   private var keyPreviewEnabled = false
-  private var numberRowEnabled = false
+  private var numberRowEnabled = true
   private var deleteRepeating = false
   private var shiftKeyView: TextView? = null
   private val letterKeyViews = mutableListOf<Pair<KeySpec, TextView>>()
@@ -67,6 +71,11 @@ class PaperKeysInputMethodService : InputMethodService() {
     }
   }
   private val digitHints = mapOf("q" to "1", "w" to "2", "e" to "3", "r" to "4", "t" to "5", "y" to "6", "u" to "7", "i" to "8", "o" to "9", "p" to "0")
+  private val symbolHints = mapOf(
+    "q" to "%", "w" to "\\", "e" to "|", "r" to "=", "t" to "[", "y" to "]", "u" to "<", "i" to ">", "o" to "{", "p" to "}",
+    "a" to "@", "s" to "#", "d" to "£", "f" to "-", "g" to "&", "h" to "-", "j" to "+", "k" to "(", "l" to ")",
+    "z" to "*", "x" to "\"", "c" to "'", "v" to ":", "b" to ";", "n" to "!", "m" to "?",
+  )
 
   override fun onCreateInputView(): View {
     refreshPreferences()
@@ -84,7 +93,7 @@ class PaperKeysInputMethodService : InputMethodService() {
   override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
     super.onStartInputView(info, restarting)
     stopDeleteRepeat()
-    val numberRowChanged = refreshPreferences()
+    refreshPreferences()
     val capsMode = currentInputConnection?.getCursorCapsMode(
       TextUtils.CAP_MODE_CHARACTERS or TextUtils.CAP_MODE_WORDS or TextUtils.CAP_MODE_SENTENCES,
     ) ?: 0
@@ -92,7 +101,7 @@ class PaperKeysInputMethodService : InputMethodService() {
     shifted = capsLock || (capsMode and (TextUtils.CAP_MODE_WORDS or TextUtils.CAP_MODE_SENTENCES)) != 0
     sentenceStart = shifted
     keyboardRoot?.let { root ->
-      if (numberRowChanged || root.childCount == 0) buildKeys(root) else updateKeyLabels()
+      buildKeys(root)
     }
   }
 
@@ -118,15 +127,23 @@ class PaperKeysInputMethodService : InputMethodService() {
     super.onDestroy()
   }
 
-  private fun refreshPreferences(): Boolean {
-    val prefs = getSharedPreferences(prefsName, Context.MODE_PRIVATE)
-    val nextNumberRow = prefs.getBoolean("numberRow", false)
-    val changed = nextNumberRow != numberRowEnabled
+  private fun keyboardPreferences() =
+    getSharedPreferences(prefsName, Context.MODE_PRIVATE).apply {
+      if (!contains("showNumberRow")) {
+        edit()
+          .putBoolean("showNumberRow", getBoolean("numberRow", true))
+          .remove("numberRow")
+          .apply()
+      }
+    }
+
+  private fun refreshPreferences() {
+    val prefs = keyboardPreferences()
+    val nextNumberRow = prefs.getBoolean("showNumberRow", true)
     soundEnabled = prefs.getBoolean("sound", false)
     vibrationEnabled = prefs.getBoolean("vibration", false)
     keyPreviewEnabled = prefs.getBoolean("keyPreview", false)
     numberRowEnabled = nextNumberRow
-    return changed
   }
 
   private fun buildKeys(root: LinearLayout) {
@@ -134,6 +151,7 @@ class PaperKeysInputMethodService : InputMethodService() {
     letterKeyViews.clear()
     shiftKeyView = null
     addToolbar(root)
+    if (toolsOpen) addToolsRow(root)
 
     if (!symbols && !emojiMode && numberRowEnabled) {
       addRow(root, "1234567890".map { KeySpec(it.toString()) }, numberRow = true)
@@ -174,54 +192,132 @@ class PaperKeysInputMethodService : InputMethodService() {
       KeySpec("☺", "emoji", 1.0f),
       KeySpec("space", "space", 3.65f),
       KeySpec(".", weight = 0.85f),
-      KeySpec("↵", "enter", 1.25f),
+      actionKeySpec(),
     ))
     updateKeyLabels()
+  }
+
+  private fun actionKeySpec(): KeySpec {
+    val options = currentInputEditorInfo?.imeOptions ?: 0
+    if ((options and EditorInfo.IME_FLAG_NO_ENTER_ACTION) != 0) return KeySpec("↵", "enter", 1.25f)
+    return when (options and EditorInfo.IME_MASK_ACTION) {
+      EditorInfo.IME_ACTION_GO -> KeySpec("➜", "enter", 1.25f)
+      EditorInfo.IME_ACTION_SEARCH -> KeySpec("SEARCH", "enter", 1.25f)
+      EditorInfo.IME_ACTION_SEND -> KeySpec("➤", "enter", 1.25f)
+      EditorInfo.IME_ACTION_NEXT -> KeySpec("→", "enter", 1.25f)
+      EditorInfo.IME_ACTION_DONE -> KeySpec("✓", "enter", 1.25f)
+      EditorInfo.IME_ACTION_PREVIOUS -> KeySpec("←", "enter", 1.25f)
+      else -> KeySpec("↵", "enter", 1.25f)
+    }
   }
 
   private fun addToolbar(root: LinearLayout) {
     val toolbar = LinearLayout(this).apply {
       orientation = LinearLayout.HORIZONTAL
-      gravity = Gravity.CENTER_VERTICAL
-      setPadding(dp(8), 0, dp(5), dp(1))
+      gravity = Gravity.CENTER
+      setPadding(dp(4), 0, dp(4), dp(1))
     }
-    val title = TextView(this).apply {
-      text = "paper keys"
-      textSize = 12f
-      typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
-      setTextColor(ink)
-      gravity = Gravity.CENTER_VERTICAL
+    val actions = listOf(
+      ToolbarAction("▦", "Paper Keys tools") {
+        toolsOpen = !toolsOpen
+        rebuildKeyboard()
+      },
+      ToolbarAction("☺︎", "Stickers and emoji") {
+        emojiMode = !emojiMode
+        symbols = false
+        toolsOpen = false
+        rebuildKeyboard()
+      },
+      ToolbarAction("GIF", "GIF search is not included in offline Paper Keys") {
+        showOfflineNotice("GIF search is not included. Paper Keys stays on-device.")
+      },
+      ToolbarAction("⚙︎", "Open Paper Keys settings") { openCompanionSettings() },
+      ToolbarAction("文A", "Translation is not included in offline Paper Keys") {
+        showOfflineNotice("Translation is not connected so typing stays on-device.")
+      },
+      ToolbarAction("🎙", "Voice input is not enabled") {
+        showOfflineNotice("Voice input is not enabled; Paper Keys does not request microphone access.")
+      },
+    )
+    actions.forEach { action ->
+      toolbar.addView(
+        toolbarButton(action.label, action.description, action.onPress),
+        LinearLayout.LayoutParams(0, dp(38), 1f),
+      )
     }
-    toolbar.addView(title, LinearLayout.LayoutParams(0, dp(29), 1f))
-    val settings = toolbarButton("⚙", "Open Paper Keys preferences") {
-      packageManager.getLaunchIntentForPackage(packageName)?.let { intent ->
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        startActivity(intent)
-      }
+    root.addView(toolbar, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(40)))
+  }
+
+  private fun addToolsRow(root: LinearLayout) {
+    val row = LinearLayout(this).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER
+      setPadding(dp(6), 0, dp(6), 0)
     }
-    val picker = toolbarButton("⌨", "Choose keyboard") {
-      (getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager)?.showInputMethodPicker()
+    val actions = listOf(
+      ToolbarAction("Emoji", "Open emoji") {
+        emojiMode = true
+        symbols = false
+        toolsOpen = false
+        rebuildKeyboard()
+      },
+      ToolbarAction(if (numberRowEnabled) "Numbers on" else "Numbers off", "Toggle number row") {
+        numberRowEnabled = !numberRowEnabled
+        getSharedPreferences(prefsName, Context.MODE_PRIVATE)
+          .edit()
+          .putBoolean("showNumberRow", numberRowEnabled)
+          .apply()
+        toolsOpen = false
+        rebuildKeyboard()
+      },
+      ToolbarAction("Settings", "Open Paper Keys settings") {
+        toolsOpen = false
+        rebuildKeyboard()
+        openCompanionSettings()
+      },
+    )
+    actions.forEach { action ->
+      row.addView(
+        toolbarButton(action.label, action.description, action.onPress),
+        LinearLayout.LayoutParams(0, dp(33), 1f),
+      )
     }
-    toolbar.addView(settings, LinearLayout.LayoutParams(dp(36), dp(29)))
-    toolbar.addView(picker, LinearLayout.LayoutParams(dp(36), dp(29)))
-    root.addView(toolbar, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(30)))
+    root.addView(row, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(35)))
   }
 
   private fun toolbarButton(label: String, description: String, onPress: () -> Unit) = TextView(this).apply {
     text = label
-    textSize = 15f
-    typeface = Typeface.create("sans-serif", Typeface.NORMAL)
-    setTextColor(muted)
+    textSize = if (label == "GIF" || label == "文A" || label.startsWith("Numbers")) 11f else 19f
+    typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+    setTextColor(ink)
     gravity = Gravity.CENTER
     contentDescription = description
     isClickable = true
     isFocusable = false
     background = RippleDrawable(
       ColorStateList.valueOf(Color.rgb(203, 193, 177)),
-      rounded(Color.TRANSPARENT, dp(7), Color.TRANSPARENT),
+      rounded(if (label == "🎙") keyFill else Color.TRANSPARENT, dp(18), Color.TRANSPARENT),
       null,
     )
     setOnClickListener { onPress() }
+  }
+
+  private fun rebuildKeyboard() {
+    keyboardRoot?.let { buildKeys(it) }
+  }
+
+  private fun openCompanionSettings() {
+    val intent = packageManager.getLaunchIntentForPackage(packageName) ?: return
+    intent.action = Intent.ACTION_VIEW
+    intent.data = Uri.parse("__APP_SCHEME__://settings")
+    intent.categories.clear()
+    intent.addCategory(Intent.CATEGORY_BROWSABLE)
+    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+    startActivity(intent)
+  }
+
+  private fun showOfflineNotice(message: String) {
+    Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
   }
 
   private fun addRow(root: LinearLayout, keys: List<KeySpec>, inset: Int = 0, numberRow: Boolean = false) {
@@ -288,9 +384,24 @@ class PaperKeysInputMethodService : InputMethodService() {
             true
           }
         }
+        if (spec.action == "space") {
+          setOnLongClickListener {
+            if (!switchToNextInputMethod(false)) {
+              (getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager)?.showInputMethodPicker()
+            }
+            true
+          }
+        }
         if (spec.action == "shift") shiftKeyView = this
         if (spec.action == "char" && spec.label.length == 1 && spec.label[0].isLetter()) {
           letterKeyViews.add(spec to this)
+        }
+        if (spec.action == "enter" && spec.label == "SEARCH") {
+          text = ""
+          getDrawable(android.R.drawable.ic_menu_search)?.mutate()?.let { searchIcon ->
+            searchIcon.setTint(ink)
+            setCompoundDrawablesWithIntrinsicBounds(searchIcon, null, null, null)
+          }
         }
       }
       val params = LinearLayout.LayoutParams(0, dp(rowHeight), spec.weight)
@@ -305,12 +416,23 @@ class PaperKeysInputMethodService : InputMethodService() {
     if (spec.action != "char" || spec.label.length != 1 || !spec.label[0].isLetter() || symbols || emojiMode) return spec.label
     val lower = spec.label.lowercase(Locale.ROOT)
     val visible = if (shifted || capsLock) spec.label.uppercase(Locale.ROOT) else lower
+    val symbol = if (numberRowEnabled) symbolHints[lower] else null
     val digit = if (numberRowEnabled) null else digitHints[lower]
-    if (digit == null) return visible
-    return SpannableString("$visible$digit").apply {
-      setSpan(RelativeSizeSpan(0.42f), visible.length, length, 0)
-      setSpan(SuperscriptSpan(), visible.length, length, 0)
-      setSpan(ForegroundColorSpan(muted), visible.length, length, 0)
+    if (symbol == null && digit == null) return visible
+    return SpannableString("$visible${symbol.orEmpty()}${digit.orEmpty()}").apply {
+      var hintStart = visible.length
+      if (symbol != null) {
+        val hintEnd = hintStart + symbol.length
+        setSpan(RelativeSizeSpan(0.42f), hintStart, hintEnd, 0)
+        setSpan(SuperscriptSpan(), hintStart, hintEnd, 0)
+        setSpan(ForegroundColorSpan(muted), hintStart, hintEnd, 0)
+        hintStart = hintEnd
+      }
+      if (digit != null) {
+        setSpan(RelativeSizeSpan(0.42f), hintStart, length, 0)
+        setSpan(SuperscriptSpan(), hintStart, length, 0)
+        setSpan(ForegroundColorSpan(muted), hintStart, length, 0)
+      }
     }
   }
 
@@ -328,8 +450,19 @@ class PaperKeysInputMethodService : InputMethodService() {
     spec.action == "symbols" -> "numbers and symbols"
     spec.action == "symbolPage" -> "more symbols"
     spec.action == "emoji" -> "emoji"
+    spec.action == "enter" -> editorActionName()
     digitHints.containsKey(spec.label.lowercase(Locale.ROOT)) -> "${spec.label}; long press for ${digitHints[spec.label.lowercase(Locale.ROOT)]}"
     else -> spec.label
+  }
+
+  private fun editorActionName(): String = when (currentInputEditorInfo?.imeOptions?.and(EditorInfo.IME_MASK_ACTION)) {
+    EditorInfo.IME_ACTION_GO -> "Go"
+    EditorInfo.IME_ACTION_SEARCH -> "Search"
+    EditorInfo.IME_ACTION_SEND -> "Send"
+    EditorInfo.IME_ACTION_NEXT -> "Next"
+    EditorInfo.IME_ACTION_DONE -> "Done"
+    EditorInfo.IME_ACTION_PREVIOUS -> "Previous"
+    else -> "Enter"
   }
 
   private fun performKey(spec: KeySpec, anchor: View) {
@@ -427,8 +560,10 @@ class PaperKeysInputMethodService : InputMethodService() {
 
   private fun sendEnter() {
     val connection = currentInputConnection ?: return
-    val action = currentInputEditorInfo?.imeOptions?.and(EditorInfo.IME_MASK_ACTION) ?: EditorInfo.IME_ACTION_UNSPECIFIED
-    if (action != EditorInfo.IME_ACTION_UNSPECIFIED && action != EditorInfo.IME_ACTION_NONE) {
+    val imeOptions = currentInputEditorInfo?.imeOptions ?: 0
+    val action = imeOptions and EditorInfo.IME_MASK_ACTION
+    val noEnterAction = (imeOptions and EditorInfo.IME_FLAG_NO_ENTER_ACTION) != 0
+    if (!noEnterAction && action != EditorInfo.IME_ACTION_UNSPECIFIED && action != EditorInfo.IME_ACTION_NONE) {
       connection.performEditorAction(action)
     } else {
       connection.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER))

@@ -10,6 +10,9 @@ const {
 
 function withPaperKeysIme(config) {
   const appPackage = config.android?.package;
+  const appScheme = Array.isArray(config.scheme)
+    ? config.scheme[0]
+    : config.scheme;
   if (!appPackage)
     throw new Error(
       "Paper Keys needs android.package to register its input method.",
@@ -158,7 +161,9 @@ function withPaperKeysIme(config) {
         const source = fs.readFileSync(path.join(sourceRoot, file), "utf8");
         fs.writeFileSync(
           path.join(javaRoot, file),
-          source.replaceAll("__APP_PACKAGE__", appPackage),
+          source
+            .replaceAll("__APP_PACKAGE__", appPackage)
+            .replaceAll("__APP_SCHEME__", appScheme || "paperkeys"),
         );
       }
       fs.copyFileSync(

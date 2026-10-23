@@ -1,30 +1,30 @@
 # Paper Keys
 
-**A quieter keyboard with the familiar shape of Gboard and the feel of paper.** Paper Keys is an independent, lightweight Android input method with warm paper colors, a clean sans-serif layout, and no cloud-first extras. It is inspired by familiar keyboard ergonomics; it does not contain or modify Google's proprietary Gboard source.
+**A private Android keyboard with Gboard's familiar geometry and a warm paper finish.** Paper Keys follows the supplied reference's keyboard rows, toolbar positions, and core text-entry behavior, but uses its own paper-and-ink design and independent native implementation. It does not contain or modify Google's proprietary Gboard code or assets.
 
-> **Build status:** A standalone debug APK with its JavaScript bundle is being produced by the current GitHub Actions workflow. The first APK artifact predates that standalone-build fix and is not the recommended no-Metro build. Launcher and rapid-typing behavior still need an on-device retest.
+> **Build status:** The previous standalone debug APK predates this screenshot-driven revision. A fresh GitHub Actions artifact will be produced when this source update is pushed. Physical launcher and rapid-typing verification still needs a device retest.
 
-## Features
+## What it does
 
-- **Android system keyboard:** A native `InputMethodService` that inserts text into the focused editor through Android's `InputConnection`.
-- **Familiar typing layout:** QWERTY rows, shift and caps lock, punctuation, space, backspace, and editor-aware enter actions.
-- **Useful basics:** An optional dedicated number row, long-press number hints, repeat-delete, and a compact emoji page.
-- **Paper-inspired interface:** Warm paper, ink, and muted-clay colors, a restrained surface grain, and clear sans-serif controls and key legends.
-- **Local-only preferences:** On-device switches for the number row, key preview, haptics, and key sounds; all feedback options start off.
-- **Try before enabling:** A tappable companion-app keyboard preview and direct actions to enable/select the keyboard in Android settings.
-- **No online bloat:** No ads, analytics, cloud typing, search, AI, or dictation. Typed text is passed directly to the focused app.
+- **Native Android keyboard:** A real `InputMethodService` sends key input through Android's focused `InputConnection`.
+- **Reference-matched layout:** A six-action top toolbar, dedicated 0–9 row on by default, symbol hints over QWERTY rows, Shift/Caps Lock, `?123`, comma, emoji, English-labelled space, period, and an editor-aware Search/Go/Send/Next/Done key.
+- **Fast everyday editing:** Long-press letters for number access, hold Backspace to repeat-delete, switch symbols/emoji locally, and long-press Space to open Android's keyboard switcher.
+- **Paper styling:** Warm cream surfaces, paper grain in the companion screens, ink-colored sans-serif legends, muted clay utility keys, and soft key shadows.
+- **Local controls:** Preferences for the number row, key preview, haptics, and key sounds. Feedback options are off by default. A companion-screen preview lets you try the layout before enabling it in Android.
 
-Paper Keys is a small, custom keyboard rather than a full Gboard replacement. It currently does not provide swipe typing, autocorrect, predictive suggestions, or a personal dictionary.
+The six toolbar positions remain visually familiar. Tools, emoji, settings, and the number-row toggle are local. The GIF, Translate, and microphone shortcuts show an explanation instead of connecting to online services; Paper Keys does not request microphone access or send typed text to a service. This keeps the reference layout without adding cloud or recording behavior.
 
-## Android installation and setup
+Paper Keys is not a full Gboard engine: it does not provide swipe typing, autocorrection, predictive suggestions, a personal dictionary, online GIF search, translation, or voice dictation.
 
-Install a standalone debug APK, open **Paper Keys**, tap **Enable keyboard**, and turn it on in Android's keyboard settings. Return to the app and tap **Choose keyboard**. Android requires users to explicitly enable and select third-party keyboards.
+## Install and enable
 
-The Android input method itself is native code. Expo Web and Expo Go can display the companion interface and interactive preview, but they do not install a system-wide keyboard.
+Download the **`paper-keys-debug-apk`** artifact from a successful run of the [Android debug APK workflow](https://github.com/ayush04-op/paper-keys-android/actions/workflows/android-debug-apk.yml). Install the APK, open **Paper Keys**, choose **Enable**, and turn it on in Android's keyboard settings. Return to the app and choose **Choose keyboard**. Android requires users to explicitly enable and select third-party keyboards.
 
-## Build and development
+The debug APK is for development, not a Play Store release. GitHub Actions retains uploaded artifacts for 14 days. Expo Web Preview shows the companion app and a demo; it cannot verify system-wide typing performance.
 
-The project uses Expo Router, React Native, TypeScript, and a local Expo config plugin for the Android IME. Local development requires Node.js and pnpm; Android builds also require the Android SDK.
+## Build and develop
+
+The app uses Expo Router, React Native, TypeScript, and a local Expo config plugin for the Android IME. Local development needs Node.js and pnpm; Android builds also need the Android SDK.
 
 ```sh
 pnpm install --frozen-lockfile
@@ -34,36 +34,26 @@ pnpm exec expo prebuild --platform android
 pnpm android
 ```
 
-The ordinary local debug variant uses React Native's Metro developer support. To build a standalone debug APK locally after prebuild, run:
+Ordinary local debug uses Metro developer support. To build a standalone debug APK with the JavaScript bundle included, use:
 
 ```sh
 cd android
 ./gradlew --no-daemon -PpaperKeysStandaloneDebug=true :app:assembleDebug
 ```
 
-### GitHub Actions debug APK
+The GitHub Actions workflow builds that standalone debug variant on relevant source changes to `main`, and it can also be run manually from **Actions → Android debug APK → Run workflow**. It verifies that `assets/index.android.bundle` exists in the APK before uploading it.
 
-The [`Android debug APK` workflow](https://github.com/ayush04-op/paper-keys-android/actions/workflows/android-debug-apk.yml) builds the standalone `debug` variant on relevant source changes to `main`, or manually via **Actions → Android debug APK → Run workflow**. It verifies that the JavaScript bundle is inside the APK before uploading the `paper-keys-debug-apk` artifact. Artifacts are retained for 14 days. This is a development APK, not a Play Store release.
+## Privacy and project structure
 
-## Privacy and current limits
+Paper Keys commits the selected key to the currently focused app. It does not store or transmit the text typed with the system keyboard; keyboard preferences are kept locally. The system shows its standard warning when a third-party keyboard is enabled.
 
-The keyboard commits selected keys into the focused app and does not store or transmit typed text. Preferences are stored locally on the device. Android displays its standard system warning when a third-party keyboard is enabled.
-
-There is no autocorrection, prediction strip, glide typing, voice input, cloud service, or cross-device sync. The native keyboard is built and run on Android; Web Preview cannot verify real-device typing performance.
-
-## Project structure
-
-- `app/` — Paper Keys home, interactive preview, and preferences screens.
-- `components/` — Reusable paper-styled keyboard preview.
-- `constants/` — Shared paper, ink, and clay design tokens.
-- `lib/` — Preference storage and the native Android bridge interface.
-- `plugins/with-paper-keys-ime.js` — Expo config plugin that registers the Android input method and bridge.
-- `plugins/android/` — Native input service, Android preferences bridge, and IME metadata.
-- `assets/images/` — Launcher, adaptive-icon, splash, favicon, and paper-grain artwork.
-
-## Contributing
-
-Bug reports and focused pull requests are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md), follow the [Code of Conduct](CODE_OF_CONDUCT.md), and use the issue templates for actionable reports. For security concerns, see [SECURITY.md](SECURITY.md). Changes to the input service or settings bridge should be built and tried on an Android device.
+- `app/` — companion home, interactive preview, and settings screens.
+- `components/` — reusable paper-styled keyboard preview.
+- `constants/` — paper, ink, and clay design tokens.
+- `lib/` — local preference storage and native Android bridge interface.
+- `plugins/with-paper-keys-ime.js` — Expo plugin for Android service, settings bridge, and standalone debug loading.
+- `plugins/android/` — native IME, preferences bridge, and keyboard metadata.
+- `assets/images/` — launcher, adaptive icon, splash, favicon, and paper-grain artwork.
 
 ## License
 
