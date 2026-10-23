@@ -32,7 +32,11 @@ pnpm exec expo prebuild --platform android
 pnpm android
 ```
 
-For a managed build, checkpoint the source in Manus and use the project Dashboard’s Android APK/AAB build. The current Sandbox has no Android SDK, so this environment has not produced an APK.
+### GitHub Actions debug APK
+
+Every push to `main` builds the Android `debug` variant in GitHub Actions. To start a build manually, open **Actions → Android debug APK → Run workflow**. When it finishes, download the `paper-keys-debug-apk` artifact from that run; artifacts are retained for 14 days. This is a development build, not a Play Store release, and its companion UI may need a Metro development server.
+
+For a managed APK/AAB build, checkpoint the source in Manus and use the project Dashboard’s Android build action.
 
 ## Privacy
 
