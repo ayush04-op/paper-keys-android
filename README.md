@@ -2,7 +2,7 @@
 
 **A private Android keyboard with Gboard's familiar geometry and a warm paper finish.** Paper Keys follows the supplied reference's keyboard rows, toolbar positions, and core text-entry behavior, but uses its own paper-and-ink design and independent native implementation. It does not contain or modify Google's proprietary Gboard code or assets.
 
-> **Build status:** The previous standalone debug APK predates this screenshot-driven revision. A fresh GitHub Actions artifact will be produced when this source update is pushed. Physical launcher and rapid-typing verification still needs a device retest.
+> **Build status:** The screenshot-aligned standalone debug APK built successfully in [GitHub Actions run #39980844277](https://github.com/ayush04-op/paper-keys-android/actions/runs/39980844277) for commit `0ea3b2f`. The `paper-keys-debug-apk` artifact (54.5 MB) contains the JavaScript bundle verified by CI and expires **November 6, 2026 at 15:59 UTC**. Physical launcher and rapid-typing verification still needs a device retest.
 
 ## What it does
 
@@ -18,7 +18,7 @@ Paper Keys is not a full Gboard engine: it does not provide swipe typing, autoco
 
 ## Install and enable
 
-Download the **`paper-keys-debug-apk`** artifact from a successful run of the [Android debug APK workflow](https://github.com/ayush04-op/paper-keys-android/actions/workflows/android-debug-apk.yml). Install the APK, open **Paper Keys**, choose **Enable**, and turn it on in Android's keyboard settings. Return to the app and choose **Choose keyboard**. Android requires users to explicitly enable and select third-party keyboards.
+Download the **`paper-keys-debug-apk`** artifact from [successful run #39980844277](https://github.com/ayush04-op/paper-keys-android/actions/runs/39980844277) (or any later successful run of the [Android debug APK workflow](https://github.com/ayush04-op/paper-keys-android/actions/workflows/android-debug-apk.yml)). Install the APK, open **Paper Keys**, choose **Enable**, and turn it on in Android's keyboard settings. Return to the app and choose **Choose keyboard**. Android requires users to explicitly enable and select third-party keyboards.
 
 The debug APK is for development, not a Play Store release. GitHub Actions retains uploaded artifacts for 14 days. Expo Web Preview shows the companion app and a demo; it cannot verify system-wide typing performance.
 
