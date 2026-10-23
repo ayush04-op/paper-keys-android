@@ -50,8 +50,8 @@ The Android keyboard service commits the selected key into the focused app and d
 
 ## Contributing
 
-Bug reports and focused pull requests are welcome. Before submitting changes, run `pnpm check` and `pnpm lint`. Changes to the input service or settings bridge should also be built and tried on an Android device, since a Web preview cannot validate native keyboard behavior.
+Bug reports and focused pull requests are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md), follow the [Code of Conduct](CODE_OF_CONDUCT.md), and use the issue templates for actionable reports. For security concerns, see [SECURITY.md](SECURITY.md). Changes to the input service or settings bridge should be built and tried on an Android device, since a Web preview cannot validate native keyboard behavior.
 
 ## License
 
-The license will be added with the public GitHub repository after confirmation of the desired license.
+Paper Keys is released under the [MIT License](LICENSE).
