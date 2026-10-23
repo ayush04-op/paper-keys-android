@@ -2,7 +2,7 @@
 
 **A calmer Android keyboard, shaped by paper.** Paper Keys pairs a minimal, serif-led companion app with a warm, tactile system keyboard for people who want fewer distractions while they write.
 
-> **Project status:** The companion app and Android input-method source are implemented. A native Android APK/AAB build and on-device verification are still pending; Expo Web is only a preview and does not install a system keyboard.
+> **Project status:** The companion app and Android input method are implemented. A debug APK was built successfully in [GitHub Actions run #39970802019](https://github.com/ayush04-op/paper-keys-android/actions/runs/39970802019); its `paper-keys-debug-apk` artifact expires November 6, 2026. Standalone/release APK/AAB and on-device verification are still pending. Expo Web is only a preview and does not install a system keyboard.
 
 ## Features
 
@@ -34,7 +34,7 @@ pnpm android
 
 ### GitHub Actions debug APK
 
-Every push to `main` builds the Android `debug` variant in GitHub Actions. To start a build manually, open **Actions → Android debug APK → Run workflow**. When it finishes, download the `paper-keys-debug-apk` artifact from that run; artifacts are retained for 14 days. This is a development build, not a Play Store release, and its companion UI may need a Metro development server.
+Pushes to `main` that change app or Android build sources build the Android `debug` variant in GitHub Actions. To start a build manually, open **Actions → Android debug APK → Run workflow**. When it finishes, download the `paper-keys-debug-apk` artifact from that run; artifacts are retained for 14 days. This is a development build, not a Play Store release, and its companion UI may need a Metro development server.
 
 For a managed APK/AAB build, checkpoint the source in Manus and use the project Dashboard’s Android build action.
 

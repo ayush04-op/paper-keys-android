@@ -4,6 +4,20 @@ on:
   push:
     branches:
       - main
+    paths:
+      - "app/**"
+      - "assets/**"
+      - "components/**"
+      - "constants/**"
+      - "hooks/**"
+      - "lib/**"
+      - "plugins/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "app.config.*"
+      - "babel.config.*"
+      - "metro.config.*"
+      - "tsconfig.json"
   workflow_dispatch:
 
 permissions:
