@@ -19,8 +19,9 @@ class PaperKeysPreferencesModule(context: ReactApplicationContext) : ReactContex
       val prefs = reactApplicationContext.getSharedPreferences("paper_keys_settings", Context.MODE_PRIVATE)
       val result = Arguments.createMap().apply {
         putBoolean("sound", prefs.getBoolean("sound", false))
-        putBoolean("vibration", prefs.getBoolean("vibration", true))
-        putBoolean("keyPreview", prefs.getBoolean("keyPreview", true))
+        putBoolean("vibration", prefs.getBoolean("vibration", false))
+        putBoolean("keyPreview", prefs.getBoolean("keyPreview", false))
+        putBoolean("numberRow", prefs.getBoolean("numberRow", false))
       }
       promise.resolve(result)
     } catch (error: Exception) {
@@ -29,13 +30,14 @@ class PaperKeysPreferencesModule(context: ReactApplicationContext) : ReactContex
   }
 
   @ReactMethod
-  fun setPreferences(sound: Boolean, vibration: Boolean, keyPreview: Boolean, promise: Promise) {
+  fun setPreferences(sound: Boolean, vibration: Boolean, keyPreview: Boolean, numberRow: Boolean, promise: Promise) {
     try {
       reactApplicationContext.getSharedPreferences("paper_keys_settings", Context.MODE_PRIVATE)
         .edit()
         .putBoolean("sound", sound)
         .putBoolean("vibration", vibration)
         .putBoolean("keyPreview", keyPreview)
+        .putBoolean("numberRow", numberRow)
         .apply()
       promise.resolve(null)
     } catch (error: Exception) {

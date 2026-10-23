@@ -1,16 +1,21 @@
 # Paper Keys — TODO
 
-## Android system keyboard
+## App launch and responsiveness
 
-- [ ] Deliver Paper Keys as an Android keyboard app with Android input-method integration so users can enable and select it as their system keyboard. The input-method service and Android registration are implemented; a debug APK is available from [successful GitHub Actions run #39970802019](https://github.com/ayush04-op/paper-keys-android/actions/runs/39970802019). On-device system-wide typing and a standalone/release build remain outstanding.
-- [x] Provide a standard QWERTY letter layout with responsive tap input; clear shift and caps-lock states; switchable numbers and symbols layouts; and essential editing/action keys including space, backspace, enter, and punctuation. The native service compiled and assembled in the GitHub Actions debug build; on-device keyboard behavior remains to be verified.
-- [x] Adapt the keyboard layout to different Android phone screen sizes and orientations. Weighted key rows and orientation-aware sizing are implemented; actual device layouts remain to be verified.
+- [ ] Opening the installed Android app launches the companion interface without requiring a running Metro server; the Android debug APK must include the app's JavaScript bundle.
+- [ ] Typing with the Android keyboard is prompt from the first key and remains responsive during fast sequences without dropping characters.
+
+## Android keyboard behavior and design
+
+- [ ] Provide a standard QWERTY letter layout with responsive tap input; clear shift and caps-lock states; switchable numbers and symbols layouts; and essential editing/action keys including space, backspace, enter, and punctuation.
+- [ ] Make the keyboard feel familiar like the base Google Keyboard/Gboard while retaining the paper theme; keep its layout and interface readable, compact, and polished.
+- [ ] Add useful lightweight keyboard features, including an optional dedicated number row, long-press number access, and repeat-delete when backspace is held; avoid cloud, ads, search, AI, or dictation bloat.
+- [ ] Adapt the keyboard layout to different Android phone screen sizes and orientations.
 
 ## Paper-inspired companion app
 
-- [x] Make the keyboard interface paper-themed with subtle texture and restrained contrast, in a minimal, classy style.
-- [x] Use a serif font throughout the app UI, settings, and keyboard itself.
-- [x] Provide a lightweight settings screen for keyboard preferences including sound, vibration, and key preview. Preferences are stored on device and shared with the native keyboard; the key-preview choice also controls the in-app preview.
+- [ ] Keep the companion app minimal and classy with a warm paper-and-ink palette, while using clear, familiar sans-serif controls for the keyboard and preferences.
+- [ ] Provide a lightweight settings screen for keyboard preferences including sound, vibration, and key preview, plus the optional number row. Store preferences on-device and share them with the Android keyboard.
 
 ## Preview, setup, and source availability
 
@@ -19,4 +24,6 @@
 
 ## Delivery status
 
-The paper-themed Android input-method service, preference bridge, config plugin, companion screens, interactive keyboard preview, Android onboarding actions, generated branding, MIT license, contributor/security/community docs, and issue templates are implemented. TypeScript, lint, Android prebuild, Kotlin compilation, and debug APK assembly pass. The debug artifact is retained in GitHub Actions through November 6, 2026. No Android device or release-build validation is claimed.
+The keyboard and companion UI have been redesigned toward familiar Gboard geometry with the paper palette, an optional number row, long-press number access, emoji mode, repeat-delete, and local-only behavior. Ordinary key taps now reuse stable key views, do not rebuild the keyboard tree, and refresh shifted labels only when shift state changes; the key-preview popup is reused, and sound/vibration/key-preview feedback are disabled by default for a lighter input path. CI's debug build uses a Gradle flag to embed JavaScript and disable Metro-only React Native dev support, and the workflow now checks that the bundle is inside the APK.
+
+`pnpm check`, `pnpm lint`, clean Expo Android prebuild, and mobile-sized Preview screenshots pass. A replacement Android APK and physical-device retest have not completed yet. No Android device is available in this environment, so final launcher startup and rapid-typing checks still require the generated APK and the user's retest.
