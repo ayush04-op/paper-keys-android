@@ -12,7 +12,7 @@
 
 ## Preview, setup, and source availability
 - [x] Let users preview and try the keyboard, then guide them to enable/select Paper Keys in Android system settings. The interactive app preview and Android settings/picker actions are implemented.
-- [ ] Keep source available as an open-source project on GitHub, while preserving the mobile project's required Manus-managed canonical repository. Public repository creation and open-source license selection remain pending.
+- [x] Keep source available as an open-source project on GitHub, while preserving the mobile project's required Manus-managed canonical repository. A separate public GitHub repository is available at https://github.com/ayush04-op/paper-keys-android under the MIT License; the Manus-managed repository remains canonical.
 
 ## Delivery status
-The paper-themed Android input-method service, preference bridge, config plugin, companion screens, interactive keyboard preview, Android onboarding actions, and generated branding are implemented. Expo Web preview, TypeScript, lint, and Android prebuild pass. The Android Kotlin compilation could not reach source compilation because this Sandbox has no Android SDK; no native release build or device validation is claimed.
+The paper-themed Android input-method service, preference bridge, config plugin, companion screens, interactive keyboard preview, Android onboarding actions, generated branding, MIT license, contributor/security/community docs, and issue templates are implemented. Expo Web preview, TypeScript, lint, and Android prebuild pass. The Android Kotlin compilation could not reach source compilation because this Sandbox has no Android SDK; no native release build or device validation is claimed.
